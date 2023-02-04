@@ -75,12 +75,61 @@ object AdvancePatternMatching extends App{
     def unapply(arg: Int): Boolean = arg > -10 && arg < 10
   }
 
-  val n2: Int = 8
-  val mathProperty2 = n1 match {
+  val n2: Int = 18
+  val mathProperty2 = n2 match {
     case even2() => "single digit"
     case singleDigit2() => "an even number"
     case _ => "no property"
   }
   println(mathProperty2)
+
+//infix patterns
+  //infix pattern work with two parameters eg) Or(a,b) can be written as a Or b
+  case class Or[A,B](a:A,b:B)
+  val either =Or(2,"two")
+  val humanDescription = either match {
+    case number Or string => s"$number is $string"
+  }
+  println(humanDescription)
+
+  //unapplySeq is used when we want to pass a sequence and we dont number of values which we get
+  abstract class MyList[+A]{
+    val head:A = ???
+    val tail: MyList[A] = ???
+  }
+  case object Empty extends MyList[Nothing]
+  case class Cons[+A](override val head:A, override val tail: MyList[A]) extends MyList[A]
+
+  object MyList{
+    def unapplySeq[A](list:MyList[A]): Option[Seq[A]] ={
+      if(list == Empty) Some(Seq.empty)
+      else unapplySeq(list.tail).map(list.head +: _)
+    }
+  }
+  val myList: MyList[Int] = Cons(1,Cons(2,Cons(3,Empty)))
+
+  val decomposed = myList match {
+    case MyList(1,2,_*) => "starting with 1 and 2"
+    case _ => "something else"
+  }
+println(decomposed)
+
+  //custom return type for unapply
+  //if u want to use any other return type other than Option then make sure it has following 2 methods inmplemented
+  //isEmpty: Boolean, get:Somrthing
+  abstract class Wrapper[T]{
+    def isEmpty:Boolean
+    def get: T
+  }
+  object PersonWrapper{
+    def unapply(person: Person): Wrapper[String] = new Wrapper[String] {
+      override def isEmpty: Boolean = false
+      override def get: String = person.name
+    }
+  }
+  println(bob match {
+    case PersonWrapper(n) => s"person name is $n"
+    case _ => "an aliean"
+  })
 
 }
